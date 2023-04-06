@@ -2,5 +2,5 @@
 #include "geometry.h"
 
 
-void drawGround();
-void drawPoint(Vector position, float size);
+void drawGround(int nw=10, int nh=10);
+void drawPoint(Vector position, double size);

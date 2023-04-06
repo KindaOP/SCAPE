@@ -4,10 +4,18 @@
 
 class Camera {
 public:
-	static Camera* Get();
+	static Camera& Get();
 	void step();
-	void orient();
+	void orient(Vector ddir);
+	void drawAxes();
 	void look();
+
+	static int W;
+	static int H;
+	static const double R_NEAR;
+	static const double R_FAR;
+
+	unsigned short wasdStates;
 
 private:
 	Camera();
@@ -15,6 +23,7 @@ private:
 	Camera(const Camera& camera) = delete;
 	Camera& operator= (const Camera& camera) = delete;
 
-	Body body;
 	static Camera singleton;
+
+	Body body;
 };

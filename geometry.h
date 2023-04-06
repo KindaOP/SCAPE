@@ -1,36 +1,57 @@
 #pragma once
+#include <iostream>
 
 
-const float DEGREE = 180 / 3.14159;
+const double PI = 3.14159;
+const double R2D = 180 / PI;
+const double D2R = 1 / R2D;
 
 
 struct Vector {
-	Vector(float x, float y, float z);
+	Vector(double x, double y, double z);
 	Vector();
-	float norm();
+	double norm();
 	Vector unit();
+	Vector rotate(Vector a, double deg);
+	
+	Vector operator+ (Vector v) const;
+	Vector& operator+= (Vector v);
+	Vector operator- (Vector v) const;
+	Vector& operator-= (Vector v);
+	Vector operator* (double f) const;
+	Vector& operator*= (double f);
+	Vector operator/ (double f) const;
+	Vector& operator/= (double f);
+	Vector operator- () const;
 
-	Vector operator/ (float f);
-	Vector& operator/= (float f);
-
-	float x;
-	float y;
-	float z;
+	double x;
+	double y;
+	double z;
 };
+
+
+std::ostream& operator<< (std::ostream& s, Vector v);
+
+
+Vector operator* (double f, Vector v);
+double dot(Vector v1, Vector v2);
+Vector cross(Vector v1, Vector v2);
 
 
 struct Body {
 	Body(
 		Vector pos,
 		Vector dir,
-		float d,
-		Vector ax,
-		float da
+		double dp,
+		Vector rot,
+		double deg,
+		double da
 	);
 
 	Vector pos;
 	Vector dir;
-	float d;
-	Vector ax;
-	float da;
+	double dp;
+	Vector rot;
+	double deg;
+	double da;
 };
