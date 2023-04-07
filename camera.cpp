@@ -2,8 +2,6 @@
 #include <GL/glut.h>
 
 
-int Camera::W = 800;
-int Camera::H = 500;
 const double Camera::R_NEAR = 1;
 const double Camera::R_FAR = 1000;
 
@@ -72,13 +70,45 @@ void Camera::step() {
 	dpos.y = 0;
 	dpos = this->body.dp * dpos.unit();
 	this->body.pos += dpos;
-	// std::cout << this->body.pos << " ";
-	// std::cout << this->body.dir << " ";
-	// std::cout << this->body.rot << std::endl;
 }
 
 
-void Camera::drawAxes() {
+void Camera::orient(double sx, double sy) {
+	static const double sensitivity = 0.1;
+	static const double yMin = sin(-15 * D2R);
+	static const double yMax = sin(15 * D2R);
+	const Vector vx = cross(this->body.dir, this->body.rot).unit();
+	const Vector vy = cross(vx, this->body.dir).unit();
+	Vector dir = sx * vx + sy * vy;
+	dir *= sensitivity / this->R_FAR;
+	dir += this->body.dir;
+	if (dir.y < yMin) {
+		dir.y = yMin;
+	}
+	else if (dir.y > yMax) {
+		dir.y = yMax;
+	}
+	this->body.dir = dir.unit();
+}
+
+
+void Camera::look() {
+	glLoadIdentity();
+	gluLookAt(
+		this->body.pos.x,
+		this->body.pos.y,
+		this->body.pos.z,
+		this->body.pos.x + this->body.dir.x,
+		this->body.pos.y + this->body.dir.y,
+		this->body.pos.z + this->body.dir.z,
+		this->body.rot.x,
+		this->body.rot.y,
+		this->body.rot.z
+	);
+}
+
+
+void Camera::drawDirectionCircle() {
 	// Save current settings
 	float currentLineWidth;
 	float currentColor[4];
@@ -86,18 +116,58 @@ void Camera::drawAxes() {
 	glGetFloatv(GL_CURRENT_COLOR, currentColor);
 
 	// Draw axes
-	glLineWidth(5);
-	glBegin(GL_LINES);
-	glColor4f(1, 0, 0, 0);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0.5, 0, 0);
-	glColor4f(0, 1, 0, 0);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0.5, 0);
-	glColor4f(0, 0, 1, 0);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0, 0.5);
+	const double size = 3;
+	const int pts = 720;
+	const double da = 360. / pts;
+	const int ppq = pts / 4;
+	const Vector& p = this->body.pos;
+	const Vector& r = this->body.rot;
+	Vector d = Vector(0, 0, size);
+	double a = 0;
+
+	glLineWidth(10);
+	glPushMatrix();
+	glTranslatef(p.x, 0, p.z);
+	glBegin(GL_LINE_LOOP);
+		Vector ci;
+		Vector cf;
+		double j = 0;
+		for (int i = 0; i < pts; i++) {
+			switch (i) {
+			case 0*ppq:
+				ci = Vector(0, 0, 1);
+				cf = Vector(1, 0, 0);
+				j = 0;
+				break;
+			case ppq:
+				ci = Vector(1, 0, 0);
+				cf = Vector(1, 1, 0);
+				j = 0;
+				break;
+			case 2*ppq:
+				ci = Vector(1, 1, 0);
+				cf = Vector(0, 1, 0);
+				j = 0;
+				break;
+			case 3*ppq:
+				ci = Vector(0, 1, 0);
+				cf = Vector(0, 0, 1);
+				j = 0;
+				break;
+			default:
+				break;
+			}
+			const double fi = (ppq - j) / ppq;
+			const double ff = j / ppq;
+			Vector c = fi * ci + ff * cf;
+			glColor4f(c.x, c.y, c.z, 0);
+			Vector v = d.rotate(r, a);
+			glVertex3f(v.x, v.y, v.z);
+			a += da;
+			j++;
+		}
 	glEnd();
+	glPopMatrix();
 
 	// Restore previous settings
 	glLineWidth(currentLineWidth);
@@ -113,27 +183,11 @@ void Camera::drawAxes() {
 Camera::Camera()
 	: wasdStates(0b0000), 
 	body(Body(
-		Vector(-5, 1, 0),
-		Vector(1, 0, 0),
-		0.025,
+		Vector(0, 1, -5),
+		Vector(0, 0, 1).unit(),
+		0.01,
 		Vector(0, 1, 0).unit(),
 		0,
 		NULL
 	))
 {}
-
-
-void Camera::look() {
-	glLoadIdentity();
-	gluLookAt(
-		this->body.pos.x, 
-		this->body.pos.y, 
-		this->body.pos.z,
-		this->body.pos.x + this->R_FAR * this->body.dir.x,
-		this->body.pos.y + this->R_FAR * this->body.dir.y,
-		this->body.pos.z + this->R_FAR * this->body.dir.z,
-		this->body.rot.x,
-		this->body.rot.y,
-		this->body.rot.z
-	);
-}

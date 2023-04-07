@@ -1,19 +1,26 @@
 #include <Windows.h>
 #include <GL/glut.h>
 #include <time.h>
+#include <iostream>
 #include "geometry.h"
 #include "camera.h"
 #include "drawing.h"
 
 
-static Vector BG_COLOR(0, 0, 0);
-static Vector GND_COLOR(1, 1, 1);
+static int W = 800;
+static int H = 500;
 static Camera* const CAMERA = &Camera::Get();
 
 
-void transformToCenterViewport(int& x, int& y) {
-	x = x - Camera::W / 2;
-	y = Camera::H / 2 - y;
+void transformToViewport(int& sx, int& sy) {
+	sx = sx - W / 2;
+	sy = H / 2 - sy;
+}
+
+
+void transformToWindow(int& sx, int& sy) {
+	sx = sx + W / 2;
+	sy = H / 2 - sy;
 }
 
 
@@ -25,14 +32,14 @@ void displayFunc() {
 
 	// Refresh buffer and screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(BG_COLOR.z, BG_COLOR.y, BG_COLOR.z, 0);
+	glClearColor(0, 0, 0, 0);
 
 	// Draw elements
-	glColor4f(GND_COLOR.x, GND_COLOR.y, GND_COLOR.z, 0);
+	glColor4f(1, 1, 1, 0);
 	drawGround(100, 100);
 
 	// Update camera
-	CAMERA->drawAxes();
+	CAMERA->drawDirectionCircle();
 	CAMERA->step();
 	CAMERA->look();
 
@@ -43,7 +50,7 @@ void displayFunc() {
 }
 
 
-void keyboardToggleFunc(unsigned char key, int x, int y) {
+void keyboardToggleFunc(unsigned char key, int sx, int sy) {
 	switch (key) {
 	case 'w':
 		CAMERA->wasdStates ^= 0b1000;
@@ -63,17 +70,33 @@ void keyboardToggleFunc(unsigned char key, int x, int y) {
 }
 
 
+void passiveMotionFunc(int sx, int sy) {
+	static const double sxMin = 0.05 * W;
+	static const double sxMax = 0.10 * W;
+	transformToViewport(sx, sy);
+	if (sx > -sxMin && sx < sxMin) {
+		return;
+	}
+	if (sx < -sxMax) {
+		sx = -sxMax;
+	}
+	else if (sx > sxMax) {
+		sx = sxMax;
+	}
+	CAMERA->orient(sx, sy);
+	transformToWindow(sx, sy);
+	glutWarpPointer(sx, sy);
+}
+
+
 int main(int argc, char** argv) {
 	// Do initial GLUT setup
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowSize(Camera::W, Camera::H);
 	const int SW = glutGet(GLUT_SCREEN_WIDTH);
 	const int SH = glutGet(GLUT_SCREEN_HEIGHT);
-	glutInitWindowPosition(
-		(SW - Camera::W) / 2, 
-		(SH - Camera::H) / 2
-	);
+	glutInitWindowPosition((SW - W) / 2, (SH - H) / 2);
+	glutInitWindowSize(W, H);
 
 	// Create window and register functions
 	glutCreateWindow("SCAPE");
@@ -81,16 +104,17 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(displayFunc);
 	glutKeyboardFunc(keyboardToggleFunc);
 	glutKeyboardUpFunc(keyboardToggleFunc);
+	glutPassiveMotionFunc(passiveMotionFunc);
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
+	glutSetCursor(GLUT_CURSOR_NONE);
 
 	// Intial OpenGL setup
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glViewport(
-		-Camera::W / 2, -Camera::H / 2,
-		 Camera::W / 2,  Camera::H / 2
-	);
-	const double ratio = static_cast<double>(Camera::W) / Camera::H;
+	glViewport(W / 2, -H / 2,W / 2, H / 2);
+	const double ratio = static_cast<double>(W) / H;
 	gluPerspective(45, ratio, Camera::R_NEAR, Camera::R_FAR);
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_MODELVIEW);

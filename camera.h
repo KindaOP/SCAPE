@@ -6,12 +6,10 @@ class Camera {
 public:
 	static Camera& Get();
 	void step();
-	void orient(Vector ddir);
-	void drawAxes();
+	void orient(double sx, double sy);
 	void look();
+	void drawDirectionCircle();
 
-	static int W;
-	static int H;
 	static const double R_NEAR;
 	static const double R_FAR;
 

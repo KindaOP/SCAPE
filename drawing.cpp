@@ -28,12 +28,12 @@ void drawGround(int nw=10, int nh=10) {
 	glColor4f(0, 0, 0, 0.5);
 	glBegin(GL_LINES);
 	for (int i = -nw/2; i <= nw/2; i++) {
-		glVertex3f(-GH/2, 0, i*gw);
-		glVertex3f(GH/2, 0, i*gw);
+		glVertex3f(i*gw, 0, -GH/2);
+		glVertex3f(i*gw, 0, GH/2);
 	}
 	for (int i = -nh/2; i <= nh/2; i++) {
-		glVertex3f(i*gh, 0, -GW/2);
-		glVertex3f(i*gh, 0, GW/2);
+		glVertex3f(-GW/2, 0, i*gh);
+		glVertex3f(GW/2, 0, i*gh);
 	}
 	glEnd();
 

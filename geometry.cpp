@@ -92,7 +92,7 @@ Vector Vector::operator- () const {
 }
 
 
-double Vector::norm() {
+double Vector::norm() const {
 	double n = 0;
 	n += pow(this->x, 2);
 	n += pow(this->y, 2);
@@ -101,12 +101,12 @@ double Vector::norm() {
 }
 
 
-Vector Vector::unit() {
+Vector Vector::unit() const {
 	return *this / this->norm();
 }
 
 
-Vector Vector::rotate(Vector a, double deg) {
+Vector Vector::rotate(Vector a, double deg) const {
 	const double rad = deg * D2R;
 	const Vector& v = *this;
 	const Vector k = a.unit();

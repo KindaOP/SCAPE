@@ -10,9 +10,9 @@ const double D2R = 1 / R2D;
 struct Vector {
 	Vector(double x, double y, double z);
 	Vector();
-	double norm();
-	Vector unit();
-	Vector rotate(Vector a, double deg);
+	double norm() const;
+	Vector unit() const;
+	Vector rotate(Vector a, double deg) const;
 	
 	Vector operator+ (Vector v) const;
 	Vector& operator+= (Vector v);
