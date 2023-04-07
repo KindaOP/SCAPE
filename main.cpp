@@ -2,6 +2,7 @@
 #include <GL/glut.h>
 #include <time.h>
 #include <iostream>
+#include <random>
 #include "geometry.h"
 #include "camera.h"
 #include "drawing.h"
@@ -14,6 +15,49 @@ static int W = 800;
 static int H = 500;
 static bool isPaused = false;
 static Camera* const CAMERA = &Camera::Get();
+
+
+static constexpr int NS = 3;
+// static constexpr int NA = 2;
+static Snowman SNOWMANS[NS] = {
+	Snowman(
+		Body(
+			Vector(2, 0, 2),
+			Vector(-1, 0, 1).unit(),
+			0.005,
+			Vector(0, 1, 0).unit(),
+			0,
+			0
+		),
+		1.0,
+		1.5
+	),
+	Snowman(
+		Body(
+			Vector(3, 0, -4),
+			Vector(-1, 0, 1).unit(),
+			0.005,
+			Vector(0, 1, 0).unit(),
+			0,
+			0
+		),
+		1.0,
+		1.5
+	),
+	Snowman(
+		Body(
+			Vector(0, 0, 5),
+			Vector(1, 0, 1).unit(),
+			0.005,
+			Vector(0, 1, 0).unit(),
+			0,
+			0
+		),
+		1.0,
+		1.5
+	)
+};
+// static Armageddon ARMAGEDDONS[NA];
 
 
 void transformToViewport(int& sx, int& sy) {
@@ -38,15 +82,24 @@ void displayFunc() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0, 0, 0, 0);
 
+	// Draw camera
+	CAMERA->drawDirectionCircle();
+	CAMERA->step();
+
 	// Draw elements
 	glColor4f(1, 1, 1, 0);
 	drawGround(100, 100);
+	for (int i = 0; i < NS; i++) {
+		SNOWMANS[i].step();
+		SNOWMANS[i].draw();
+	}
+	/*for (int i = 0; i < NA; i++) {
+		ARMAGEDDONS[i].step();
+		ARMAGEDDONS[i].draw();
+	}*/
 
 	// Update camera
-	CAMERA->drawDirectionCircle();
-	CAMERA->step();
 	CAMERA->look();
-
 	glutSwapBuffers();
 
 	// Delay roughly according to FPS
