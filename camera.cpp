@@ -1,9 +1,11 @@
 #include "camera.h"
+#include <time.h>
 #include <GL/glut.h>
 
 
 const double Camera::R_NEAR = 1;
 const double Camera::R_FAR = 1000;
+const double Camera::DY = 0.05;
 
 
 Camera Camera::singleton;
@@ -14,11 +16,31 @@ Camera& Camera::Get() {
 }
 
 
+void Camera::jump() {
+	static const double interval = 250;
+	static double lastTime = 0;
+	static int numMidJump = 0;
+	if (this->dy==0) {
+		lastTime = clock();
+		this->dy = this->DY;
+		numMidJump = 0;
+	}
+	else if (numMidJump >= 1) {
+		return;
+	}
+	else if (clock() - lastTime >= interval) {
+		lastTime = 0;
+		this->dy = this->DY;
+		numMidJump++;
+	}
+}
+
+
 void Camera::step() {
-	double deg;
+	double deg = -420;
 	switch (this->wasdStates) {
 	case 0b0000:
-		return;
+		break;
 	case 0b0001:
 		deg = -90;
 		break;
@@ -32,7 +54,7 @@ void Camera::step() {
 		deg = 90;
 		break;
 	case 0b0101:
-		return;
+		break;
 	case 0b0110:
 		deg = 135;
 		break;
@@ -46,7 +68,7 @@ void Camera::step() {
 		deg = -45;
 		break;
 	case 0b1010:
-		return;
+		break;
 	case 0b1011:
 		deg = -90;
 		break;
@@ -60,16 +82,27 @@ void Camera::step() {
 		deg = 90;
 		break;
 	case 0b1111:
-		return;
+		break;
 	default:
-		return;
+		break;
 	}
 	
-	// Projection onto xz-plane.
-	Vector dpos = this->body.dir.rotate(this->body.rot, deg);
-	dpos.y = 0;
-	dpos = this->body.dp * dpos.unit();
-	this->body.pos += dpos;
+	if (deg != -420) {
+		Vector dpos = this->body.dir.rotate(this->body.rot, deg);
+		dpos.y = 0;
+		dpos = this->body.dp * dpos.unit();
+		this->body.pos += dpos;
+	}
+
+	double& y = this->body.pos.y;
+	if (y + this->dy > this->height) {
+		y += this->dy;
+		this->dy += GY;
+	}
+	else {
+		y = this->height;
+		this->dy = 0;
+	}
 }
 
 
@@ -116,7 +149,7 @@ void Camera::drawDirectionCircle() {
 	glGetFloatv(GL_CURRENT_COLOR, currentColor);
 
 	// Draw axes
-	const double size = 3;
+	const double size = 5 * this->body.pos.y;
 	const int pts = 720;
 	const double da = 360. / pts;
 	const int ppq = pts / 4;
@@ -181,7 +214,7 @@ void Camera::drawDirectionCircle() {
 
 
 Camera::Camera()
-	: wasdStates(0b0000), 
+	: wasdStates(0b0000),
 	body(Body(
 		Vector(0, 1, -5),
 		Vector(0, 0, 1).unit(),
@@ -189,5 +222,8 @@ Camera::Camera()
 		Vector(0, 1, 0).unit(),
 		0,
 		NULL
-	))
-{}
+		)),
+	dy(0)
+{
+	this->height = this->body.pos.y;
+}

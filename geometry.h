@@ -5,6 +5,7 @@
 const double PI = 3.14159;
 const double R2D = 180 / PI;
 const double D2R = 1 / R2D;
+const double GY = -0.0002;
 
 
 struct Vector {

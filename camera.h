@@ -5,6 +5,7 @@
 class Camera {
 public:
 	static Camera& Get();
+	void jump();
 	void step();
 	void orient(double sx, double sy);
 	void look();
@@ -12,6 +13,7 @@ public:
 
 	static const double R_NEAR;
 	static const double R_FAR;
+	static const double DY;
 
 	unsigned short wasdStates;
 
@@ -24,4 +26,6 @@ private:
 	static Camera singleton;
 
 	Body body;
+	double dy;
+	double height;
 };

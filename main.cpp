@@ -7,8 +7,12 @@
 #include "drawing.h"
 
 
+typedef unsigned char uchar;
+
+
 static int W = 800;
 static int H = 500;
+static bool isPaused = false;
 static Camera* const CAMERA = &Camera::Get();
 
 
@@ -50,6 +54,11 @@ void displayFunc() {
 }
 
 
+void pauseFunc() {
+
+}
+
+
 void keyboardToggleFunc(unsigned char key, int sx, int sy) {
 	switch (key) {
 	case 'w':
@@ -70,11 +79,32 @@ void keyboardToggleFunc(unsigned char key, int sx, int sy) {
 }
 
 
+void keyboardDownFunc(uchar key, int sx, int sy) {
+	if (static_cast<int>(key) == 32) {	// Spacebar
+		CAMERA->jump();
+	}
+	keyboardToggleFunc(key, sx, sy);
+}
+
+
+void keyboardUpFunc(uchar key, int sx, int sy) {
+	keyboardToggleFunc(key, sx, sy);
+}
+
+
 void passiveMotionFunc(int sx, int sy) {
-	static const double sxMin = 0.05 * W;
-	static const double sxMax = 0.10 * W;
+	const double sxMin = 0.05 * W;
+	const double sxMax = 0.10 * W;
+	const double syMin = 0.00 * H;
+	const double syMax = 1.00 * H;
+	if (isPaused) {
+		return;
+	}
 	transformToViewport(sx, sy);
 	if (sx > -sxMin && sx < sxMin) {
+		return;
+	}
+	if (sy > -syMin && sy < syMin) {
 		return;
 	}
 	if (sx < -sxMax) {
@@ -83,9 +113,31 @@ void passiveMotionFunc(int sx, int sy) {
 	else if (sx > sxMax) {
 		sx = sxMax;
 	}
+	if (sy < -syMax) {
+		sy = -syMax;
+	}
+	else if (sy > syMax) {
+		sy = syMax;
+	}
 	CAMERA->orient(sx, sy);
 	transformToWindow(sx, sy);
 	glutWarpPointer(sx, sy);
+}
+
+
+void mouseFunc(int button, int state, int sx, int sy) {
+
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		isPaused = !isPaused;
+	}
+	if (isPaused) {
+		glutIdleFunc(pauseFunc);
+		glutSetCursor(GLUT_CURSOR_CROSSHAIR);
+	}
+	else {
+		glutIdleFunc(displayFunc);
+		glutSetCursor(GLUT_CURSOR_NONE);
+	}
 }
 
 
@@ -102,15 +154,14 @@ int main(int argc, char** argv) {
 	glutCreateWindow("SCAPE");
 	glutIdleFunc(displayFunc);
 	glutDisplayFunc(displayFunc);
-	glutKeyboardFunc(keyboardToggleFunc);
-	glutKeyboardUpFunc(keyboardToggleFunc);
+	glutKeyboardFunc(keyboardDownFunc);
+	glutKeyboardUpFunc(keyboardUpFunc);
 	glutPassiveMotionFunc(passiveMotionFunc);
+	glutMouseFunc(mouseFunc);
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 	glutSetCursor(GLUT_CURSOR_NONE);
 
 	// Intial OpenGL setup
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glViewport(W / 2, -H / 2,W / 2, H / 2);
